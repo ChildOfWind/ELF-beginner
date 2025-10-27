@@ -1,0 +1,61 @@
+#!/bin/bash
+
+echo ""
+echo "============================================"
+echo "1. PLT 段对比"
+echo "============================================"
+echo ""
+echo "--- 延迟绑定版本 (main_lazy) 的 PLT ---"
+objdump -M intel -d -j .plt main_lazy | head -40
+echo ""
+echo "--- 立即绑定版本 (main_now) 的 PLT ---"
+objdump -M intel -d -j .plt main_now | head -40
+
+echo ""
+echo "============================================"
+echo "2. GOT.PLT 段对比"
+echo "============================================"
+echo ""
+echo "--- 延迟绑定版本 (main_lazy) 的 GOT.PLT ---"
+readelf -x .got.plt main_lazy
+echo ""
+echo "--- 立即绑定版本 (main_now) 的 GOT.PLT ---"
+readelf -x .got.plt main_now
+
+echo ""
+echo "============================================"
+echo "3. 重定位信息对比"
+echo "============================================"
+echo ""
+echo "--- 延迟绑定版本 (main_lazy) ---"
+readelf -r main_lazy | grep -A 20 "rela.plt"
+echo ""
+echo "--- 立即绑定版本 (main_now) ---"
+readelf -r main_now | grep -A 20 "rela.plt"
+
+echo ""
+echo "============================================"
+echo "4. 动态段标志对比"
+echo "============================================"
+echo ""
+echo "--- 延迟绑定版本 (main_lazy) ---"
+readelf -d main_lazy | grep -E "(BIND_NOW|FLAGS)"
+echo ""
+echo "--- 立即绑定版本 (main_now) ---"
+readelf -d main_now | grep -E "(BIND_NOW|FLAGS)"
+
+echo ""
+echo "============================================"
+echo "关键差异说明："
+echo "============================================"
+echo "1. 延迟绑定 (main_lazy):"
+echo "   - 默认模式，不设置 BIND_NOW 标志"
+echo "   - GOT 初始指向 PLT resolver"
+echo "   - 第一次调用时才解析符号"
+echo ""
+echo "2. 立即绑定 (main_now):"
+echo "   - 设置 DT_BIND_NOW 标志或 DF_BIND_NOW"
+echo "   - 启动时解析所有符号"
+echo "   - GOT 在程序启动时就填充实际地址"
+echo "============================================"
+
